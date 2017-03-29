@@ -25,6 +25,7 @@
 			<div id="Table"></div>
 		</div>
 		<script type="text/javascript">
+			var T = window.location.hash.substr(1);
 			function randomString(len) {
 			　　len = len || 32;
 			　　var $chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';    /****默认去掉了容易混淆的字符oOLl,9gq,Vv,Uu,I1****/
@@ -71,7 +72,8 @@
 				WIDTH_RESIZE = 5,
 				WIDTH_RECTANGLE = 50,
 				HEIGHT_RISIZE = 5,
-				WIDTH_LEGEND = 200,
+				// WIDTH_LEGEND = 200,
+				WIDTH_LEGEND = 0,
 				PADDING_LEGEND = 20,
 				PADDING_LEGEND_TEXT = 20,
 				WIDTH_LEGEND_ITEM = WIDTH_LEGEND / 3 - PADDING_LEGEND * 2,
@@ -105,6 +107,12 @@
 					color : COLOR.RECT_FILL_Move,
 					text : "可移动"
 				  }],
+				TaskTitle = {
+					"I" : "收货计划",
+					"O" : "发货计划",
+					"S" : "散托作业",
+					"Z" : "整托作业"
+				},
 				  gatesArray = [],
 				  yGScale;
 			/** 
@@ -160,6 +168,7 @@
 					var index
 					aAppointment.push({
 						// APP_SECTIONID : randomGate(Math.ceil(Math.random()*10),Math.ceil(Math.random()*3)),
+						sort : 0,
 						APP_SECTIONID : "",
 						SR_ACT_STATE : "" + Math.floor(Math.random()*5),
 						// SR_ACT_STATE : "0",
@@ -224,7 +233,8 @@
 				var timeMax = new Date(sDateMax.substr(0, 4), sDateMax.substr(4, 2) - 1, sDateMax.substr(6, 2), sTimeMax.substr(0, 2), sTimeMax.substr(2, 2), sTimeMax.substr(4, 2));
 				
 				//draw DateTime
-				$("#DateTime").html(timeMin.getFullYear() + "年" 
+				$("#DateTime").html(TaskTitle[T] + " : "
+					+ timeMin.getFullYear() + "年" 
 					+ (timeMin.getMonth() + 1)+ "月"
 					+ timeMin.getDate() + "日" 
 					+ formatter0(timeMin.getHours()) + ":"
@@ -250,19 +260,21 @@
 						</div>
 					</div>
 				*/
-				aProgress.forEach(function(item, i ){
-					var a = $("#Progress").append("<div id=Progress" + i + " class='Progress'></div>");
-					$("#Progress" + i).append("<div id=title" + i +" class='ProgressTitle'>" + item.title + "</div>");// add title
-					$("#Progress" + i).append("<div id=percentage" + i +" class='ProgressIndicator'></div>");
-					$("#percentage" + i).append("<div id=pl" + i + " class='ProgressIndicatorLeft' style='width:calc(" + item.percentage.toFixed(2) + "% - 0.2rem);'></div>");
-					$("#percentage" + i).append("<div id=pr" + i + " class='ProgressIndicatorRight' style='width:calc(" + (100 - item.percentage).toFixed(2) + "% - 0.2rem);'></div>");
-					if(item.percentage < 50)
-					{
-						$("#pr" + i).html(item.percentage.toFixed(2) + "%");
-					} else {
-						$("#pl" + i).html(item.percentage.toFixed(2) + "%");
-					}
-				});
+				if(T === "I" || T === "O"){
+					aProgress.forEach(function(item, i ){
+						var a = $("#Progress").append("<div id=Progress" + i + " class='Progress'></div>");
+						$("#Progress" + i).append("<div id=title" + i +" class='ProgressTitle'>" + item.title + "</div>");// add title
+						$("#Progress" + i).append("<div id=percentage" + i +" class='ProgressIndicator'></div>");
+						$("#percentage" + i).append("<div id=pl" + i + " class='ProgressIndicatorLeft' style='width:calc(" + item.percentage.toFixed(2) + "% - 0.2rem);'></div>");
+						$("#percentage" + i).append("<div id=pr" + i + " class='ProgressIndicatorRight' style='width:calc(" + (100 - item.percentage).toFixed(2) + "% - 0.2rem);'></div>");
+						if(item.percentage < 50)
+						{
+							$("#pr" + i).html(item.percentage.toFixed(2) + "%");
+						} else {
+							$("#pl" + i).html(item.percentage.toFixed(2) + "%");
+						}
+					});
+				}
 
 				//draw Table
 				this.appointments = aAppointment;
@@ -331,13 +343,24 @@
 				var tipContent = d3.tip()
 					.attr('class', 'd3-tip')
 					.html(function(d) {
-					    return "<p style='color:red;'>车号: " + d.TU + "</p>"
-					    	+ "<p style='color:red;'>库门: " + d.TU + "</p>"
-					    	+ "<div><p style='color:red; float: left;'>任务排序方式：</p>" 
-					    	+ '<label><input name="Fruit" type="radio" value="1" />物料</label> '
-							+ '<label><input name="Fruit" type="radio" value="2" />仓位</label></div> '
-					    	+ "<input type='submit' value='分配库门' onclick='test1()' style='background-color: black;'/>";
-					    	// + "<div><p style='color:red'>分配库门</p><select><option value ='volvo'>Volvo</option><option value ='saab'>Saab</option><option value='opel'>Opel</option><option value='audi'>Audi</option></select></div>";
+						var html = "";
+						switch(T){
+							case "I":
+							case "O":
+								html += "<p style='color:red;'>车号: " + d.TU + "</p>"
+								    	+ "<p style='color:red;'>库门: " + d.TU + "</p>"
+								    	+ "<input type='submit' value='分配库门' onclick='test1()' style='background-color: black;'/>";
+								break;
+							case "Z":
+							case "S":
+								html += "<div><p style='color:red; float: left;'>任务排序方式：</p>" 
+								    	+ '<label><input name="SortType" type="radio" value="0" />物料</label> '
+										+ '<label><input name="SortType" type="radio" value="1" />仓位</label></div> ';
+								break;
+							default:
+								break;
+						}
+					    return html;
 					});
 		        function generateData(){
 		        	//appointment to rect data
@@ -359,6 +382,7 @@
 			            item.SR_ACT_STATE = "4";
 			          }
 			          intervals.push({
+			          	sort: item.sort,//TBD
 			            gate: item.APP_SECTIONID,
 			            startTime: startTime,
 			            endTime: endTime,
@@ -554,7 +578,17 @@
 		        })
 		        .attr("height", WIDTH_RECTANGLE)
 		        .attr("cursor", "move")
-		        .on('mouseover', tipContent.show)
+		        .on('mouseover', function(d){
+		        	tipContent.show();
+		        	// $(":radio").forEach(function(item){
+		        	// 	item.source = d.source;
+		        	// });
+		        	tipContent.d = d;
+		        	$(":radio")[d.sort].checked = true;
+		        	$(":radio").click(function(e){
+						tipContent.d.sort = e.target.value;
+					});
+		        })
 		        // .on('mouseout', tipContent.hide)
 		        .attr("width", function(d) {
 		          return 0;

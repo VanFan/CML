@@ -579,14 +579,11 @@
 		        .attr("height", WIDTH_RECTANGLE)
 		        .attr("cursor", "move")
 		        .on('mouseover', function(d){
-		        	tipContent.show();
-		        	// $(":radio").forEach(function(item){
-		        	// 	item.source = d.source;
-		        	// });
+		        	tipContent.show(d);
 		        	tipContent.d = d;
 		        	$(":radio")[d.sort].checked = true;
 		        	$(":radio").click(function(e){
-						tipContent.d.sort = e.target.value;
+						tipContent.d.source.sort = tipContent.d.sort = e.target.value;
 					});
 		        })
 		        // .on('mouseout', tipContent.hide)
@@ -823,6 +820,9 @@
 		    }
 
 		    function dragend(d) {
+		    	if (d.status !== "0"){
+		        	return;
+		      	}
 		      if(checkAvailable(d)){
 		        d.source.STARTTIME = time2string(d.startTime);
 		        d.source.FINISHTIME = time2string(d.endTime);

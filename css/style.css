@@ -43,6 +43,22 @@
 	text-align: center;
 }
 
+.Radio {
+  border: solid 0.1rem;
+  padding: 1rem;
+}
+
+.Button {
+  border: none;
+  background-color: #2f3c48;
+  color: #cae4fb;
+  height: 3rem;
+}
+
+.Button:hover {
+  background-color: rgba(99,127,153,0.5);
+}
+
 .axis path,
 .axis line {
   fill: none;
@@ -74,6 +90,7 @@
   font-weight: bold;
   padding: 12px;
   background: rgba(0, 0, 0, 0.8);
+  /*background-color: #2f3c48;*/
   color: #fff;
   border-radius: 2px;
   pointer-events: none;
@@ -129,15 +146,18 @@ Abel at Aug/10/2016
 }
 
 #SelectDialog{
-  padding: 0.5rem;
   left: 50%;
   top: 50%;
-  /*min-height: 200px;*/
-  min-width: 100px;
+  min-width: 200px;
   max-width: calc(50% - 2rem);
   position: absolute;
   z-index: 10;
   background-color: white;
+}
+
+#Buttons{
+  background-color: #2f3c48;
+  padding: 0.5rem;
 }
 
 #BL{

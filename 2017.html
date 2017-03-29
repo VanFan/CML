@@ -581,10 +581,12 @@
 		        .on('mouseover', function(d){
 		        	tipContent.show(d);
 		        	tipContent.d = d;
-		        	$(":radio")[d.sort].checked = true;
-		        	$(":radio").click(function(e){
-						tipContent.d.source.sort = tipContent.d.sort = e.target.value;
-					});
+		        	if(T === "Z" || T === "S"){
+		        		$(":radio")[d.sort].checked = true;
+			        	$(":radio").click(function(e){
+							tipContent.d.source.sort = tipContent.d.sort = e.target.value;
+						});
+		        	}
 		        })
 		        // .on('mouseout', tipContent.hide)
 		        .attr("width", function(d) {
@@ -805,7 +807,7 @@
 		        })
 		        .attr("y", function() {
 		          var y = Math.floor((d3.event.y - PADDING_RECTANGLE) / ROW_HEIGHT) * ROW_HEIGHT + PADDING_RECTANGLE;
-		          d.gate = aGateList[row2gate(yGScale.invert(y - WIDTH_RECTANGLE / 2)) + 1];
+		          d.gate = aGateList[row2gate(yGScale.invert(y - WIDTH_RECTANGLE / 2))];
 		          d.text1.setAttribute("y", y + textDownPadding);
 		          d.text2.setAttribute("y", y + 2 * textDownPadding);
 		          d.text3.setAttribute("y", y + 3 * textDownPadding);
@@ -833,10 +835,10 @@
 		    }
 		    function row2gate(nRow) {
 		      for (var i = 0; i < gatesArray.length; i ++) {
-		        nRow -= gatesArray[i];
 		        if (nRow <= 0) {
 		          return i;
 		        }
+		        nRow -= gatesArray[i];
 		      }
 		      return gatesArray.length - 1;
 		    }

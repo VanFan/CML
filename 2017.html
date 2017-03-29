@@ -47,8 +47,9 @@
 				if(!document.getElementById("SelectDialog")){
 					$("#Table").append("<div id='SelectDialog'></div>");
 					$("#SelectDialog").append("<div id='GateList'></div>");
-					$("#SelectDialog").append("<input type='submit' value='确定' onclick='yes()'/>");
-					$("#SelectDialog").append("<input type='submit' value='取消' onclick='no()'/>");
+					$("#SelectDialog").append("<div id='Buttons'></div>");
+					$("#Buttons").append("<input class='Button' type='submit' value='确定' onclick='yes()'/>");
+					$("#Buttons").append("<input class='Button' type='submit' value='取消' onclick='no()' style='float: right;'/>");
 				}
 				$("#GateList").empty();
 				var gates = [];
@@ -58,14 +59,14 @@
 					});
 				}
 				gates.forEach(function(item, i){
-					$("#GateList").append("<div><label><input name='gate' type='radio' value=" + i + " />" + item.text + "</label></div>");
+					$("#GateList").append("<div class='Radio'><label><input name='gate' type='radio' value=" + i + " />" + item.text + "</label></div>");
 				}); 
 				$("#whole").append("<div id='BL'></div>")
 			}
 			var TITLE_SECTIONID_WIDTH = 50,
 				PADDING = 100 + TITLE_SECTIONID_WIDTH,
 				MARGIN = 800, //default
-				PADDING_HEIGHT = 50,
+				PADDING_HEIGHT = 25,
 				ROW_HEIGHT = 60,
 				HEIGHT_SVG = 3000,
 				WIDTH_SVG = 1000, // default
@@ -281,9 +282,9 @@
 				var that = this;
 				this.api = oAPI;
 				//legend
-				$("#Table").append("<div id='legend' style='float: right; width:" + WIDTH_LEGEND + "px; height:600px;'></div>");
+				$("#Table").append("<div id='legend' style='float: right; width:" + WIDTH_LEGEND + "px; height:580px;'></div>");
 				//timeAxis
-				$("#Table").append("<div id='timeAxis' style='width: calc(100% - " + WIDTH_LEGEND + "px); height: " + 100 + "px;'></div>");
+				$("#Table").append("<div id='timeAxis' style='width: calc(100% - " + WIDTH_LEGEND + "px); height: " + 80 + "px;'></div>");
 				$("#Table").append("<div id='gantt_chart' style='width: calc(100% - " + WIDTH_LEGEND + "px); height: " + 500 + "px; overflow-y: scroll;'></div>");
 				
 				//简体中文本地化

@@ -67,7 +67,7 @@
 
 			function chooseGate(T) {
 				if (!document.getElementById("SelectDialog" + T)) {
-					$("#Table" + T).append("<div id='SelectDialog" + T + "' class='SelectDialog'></div>");
+					$("#Table" + T).append("<div id='SelectDialog" + T + "' class='SelectDialog' style='top:" + document.getElementById("Table" + T).offsetTop + "px;'></div>");
 					$("#SelectDialog" + T).append("<div id='GateList" + T + "' class='GateList'></div>");
 					$("#SelectDialog" + T).append("<div id='Buttons" + T + "' class='Buttons'></div>");
 					$("#Buttons" + T).append("<input class='Button' type='submit' value='确定' onclick='yes" + T + "()'/>");

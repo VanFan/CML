@@ -3,10 +3,11 @@
 	to {width: 80%;}
 }
 .Progress{
-	padding: 0.5rem;
-	height: 3rem;
+	padding: 0.1rem;
+	height: 2.5rem;
 }
 .ProgressTitle{
+  line-height: 2rem;
 	float: left;
 	width:20%;
 	text-align: center;
@@ -14,11 +15,10 @@
 .ProgressIndicator{
 	animation: processIndicator 1s;
 	float: left; 
-	/*width:calc(80% - 5rem);*/
 	width: 75%;
 }
 .ProgressIndicatorLeft {
-
+  line-height: 2rem;
 	height: 2rem;
 	float: left;
 	text-align: right;
@@ -29,6 +29,7 @@
 	border-width: 0.1rem;
 }
 .ProgressIndicatorRight {
+  line-height: 2rem;
 	height: 2rem;
 	float: left;
 	text-align: left;
@@ -41,6 +42,7 @@
 .Title {
 	font-size: 20px;
 	text-align: center;
+  padding-bottom: 0.2rem;
 }
 
 .Radio {
@@ -145,9 +147,9 @@ Abel at Aug/10/2016
   left: 100%;
 }
 
-#SelectDialog{
-  left: 50%;
-  top: 50%;
+.SelectDialog{
+  left: 40%;
+  top: 20%;
   min-width: 200px;
   max-width: calc(50% - 2rem);
   position: absolute;
@@ -155,12 +157,17 @@ Abel at Aug/10/2016
   background-color: white;
 }
 
-#Buttons{
+.GateList {
+  overflow-y: scroll;
+  max-height: 400px;
+}
+
+.Buttons{
   background-color: #2f3c48;
   padding: 0.5rem;
 }
 
-#BL{
+.BL{
   z-index: 8;
   position: fixed;
   background-color: #000000;

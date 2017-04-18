@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<script src="js/d3.v3.min.js" charset="utf-8"></script>
@@ -9,60 +10,106 @@
 		<script src="js/d3-collection.v1.min.js"></script>
 		<script src="js/d3-color.v1.min.js"></script>
 		<script src="js/d3-format.v1.min.js"></script>
-  		<script src="js/d3-interpolate.v1.min.js"></script>
+		<script src="js/d3-interpolate.v1.min.js"></script>
 		<script src="js/d3-time.v1.min.js"></script>
-  		<script src="js/d3-time-format.v2.min.js"></script>
+		<script src="js/d3-time-format.v2.min.js"></script>
 		<script src="js/d3-scale.v1.min.js"></script>
 		<script src="js/d3.tip.v0.6.3.js"></script>
 		<link rel="stylesheet" href="css/bootstrap.min.css">
 		<link rel="stylesheet" href="css/bootstrap-theme.min.css">
 		<link rel="stylesheet" href="css/style.css">
 	</head>
+
 	<body>
-		<div id="whole">
-			<div id="DateTime" class="Title"></div>
-			<div id="Progress"></div>
-			<div id="Table"></div>
-		</div>
+		<div id="ChartI"></div>
+		<div id="ChartO"></div>
+		<div id="ChartS"></div>
+		<div id="ChartZ"></div>
 		<script type="text/javascript">
-			var T = window.location.hash.substr(1);
-			function randomString(len) {
-			　　len = len || 32;
-			　　var $chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';    /****默认去掉了容易混淆的字符oOLl,9gq,Vv,Uu,I1****/
-			　　var maxPos = $chars.length;
-			　　var pwd = '';
-			　　for (i = 0; i < len; i++) {
-			　　　　pwd += $chars.charAt(Math.floor(Math.random() * maxPos));
-			　　}
-			　　return pwd;
+			// var T = window.location.hash.substr(1);
+			function randomString(len) {　　
+				len = len || 32;　　
+				var $chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678'; /****默认去掉了容易混淆的字符oOLl,9gq,Vv,Uu,I1****/ 　　
+				var maxPos = $chars.length;　　
+				var pwd = '';　　
+				for (i = 0; i < len; i++) {　　　　
+					pwd += $chars.charAt(Math.floor(Math.random() * maxPos));　　
+				}　　
+				return pwd;
 			}
-			function yes(){
-				no();
+
+			function yes(T) {
+				RectObj[T].source.DOOR = RectObj[T].DOOR = $("[name='gate" + T + "']").filter(":checked").val();
+				no(T);
 			}
-			function no(){
-				$("#SelectDialog").remove();
-				$("#BL").remove();
+
+			function no(T) {
+				$("#SelectDialog" + T).remove();
+				$("#BL" + T).remove();
 			}
-			function test1(){
-				if(!document.getElementById("SelectDialog")){
-					$("#Table").append("<div id='SelectDialog'></div>");
-					$("#SelectDialog").append("<div id='GateList'></div>");
-					$("#SelectDialog").append("<div id='Buttons'></div>");
-					$("#Buttons").append("<input class='Button' type='submit' value='确定' onclick='yes()'/>");
-					$("#Buttons").append("<input class='Button' type='submit' value='取消' onclick='no()' style='float: right;'/>");
+			["I", "O", "Z", "S"].forEach(function(item) {
+				window["chooseGate" + item] = function() {
+					chooseGate(item);
+				};
+				window["yes" + item] = function() {
+					yes(item);
+				};
+				window["no" + item] = function() {
+					no(item);
+				};
+				window["send_tu_to_tm" + item] = function() {
+					Gantt_HTMLIsland.send_tu_to_tm(item);
+				};
+				window["update" + item] = function() {
+					Gantt_HTMLIsland.update(item);
+				};
+			});
+
+			function chooseGate(T) {
+				if (!document.getElementById("SelectDialog" + T)) {
+					$("#Table" + T).append("<div id='SelectDialog" + T + "' class='SelectDialog'></div>");
+					$("#SelectDialog" + T).append("<div id='GateList" + T + "' class='GateList'></div>");
+					$("#SelectDialog" + T).append("<div id='Buttons" + T + "' class='Buttons'></div>");
+					$("#Buttons" + T).append("<input class='Button' type='submit' value='确定' onclick='yes" + T + "()'/>");
+					$("#Buttons" + T).append("<input class='Button' type='submit' value='取消' onclick='no" + T + "()' style='float: right;'/>");
 				}
-				$("#GateList").empty();
-				var gates = [];
-				for(var i = 0; i < 5; i++){
-					gates.push({
-						text : randomString(5)
-					});
-				}
-				gates.forEach(function(item, i){
-					$("#GateList").append("<div class='Radio'><label><input name='gate' type='radio' value=" + i + " />" + item.text + "</label></div>");
-				}); 
-				$("#whole").append("<div id='BL'></div>")
+				$("#GateList" + T).empty();
+				aDoors.forEach(function(item, i) {
+					$("#GateList" + T).append("<div class='Radio'><input name='gate" + T + "' type='radio' style='height: inherit;' " + (item.SECTIONID === RectObj[T].DOOR ? "checked='checked'" : "") + "value='" + item.SECTIONID + "' >" + (item.SECTIONID === "" ? "未分配" : item.SECTIONID) + "</input></div>");
+				});
+				$("#Chart" + T).append("<div class='BL' id='BL" + T + "'></div>");
 			}
+			/** 
+			 * util functions
+			 */
+			function formatter0(number) {
+				if (number < 10)
+					return "0" + number;
+				return number;
+			}
+
+			function dt2str(dt) {
+				return "" + dt.getFullYear() + formatter0(dt.getMonth()) + formatter0(dt.getDate()) + formatter0(dt.getHours()) + formatter0(dt.getMinutes()) + formatter0(dt.getSeconds());
+			}
+
+			function formattTime(sTime) {
+				var year = sTime.substr(0, 4),
+					month = sTime.substr(4, 2),
+					day = sTime.substr(6, 2),
+					hour = sTime.substr(8, 2),
+					minute = sTime.substr(10, 2),
+					second = sTime.substr(12, 2);
+				return new Date(year, month - 1, day, hour, minute, second);
+			}
+
+			function colorOfResize(d) {
+				if (d.status !== "0") {
+					return COLOR.RECT_FILL_Freeze;
+				} else {
+					return COLOR.RECT_FILL_Move;
+				}
+			}
+			//const varieties
 			var TITLE_SECTIONID_WIDTH = 50,
 				PADDING = 100 + TITLE_SECTIONID_WIDTH,
 				MARGIN = 800, //default
@@ -82,824 +129,1001 @@
 				textLeftPadding = 5,
 				textDownPadding = WIDTH_RECTANGLE / 3.2,
 				PADDING_RECTANGLE = (ROW_HEIGHT - WIDTH_RECTANGLE) / 2,
-				WIDTH_TICK = 400,//default
+				WIDTH_TICK = 400, //default
 				COLOR = {
 					// Body
-					"RECT_FILL_Freeze" :"red", // status is not 0
-					"RECT_FILL_Move" : "green" ,// status is 0, default
-					"RECT_FILL_act0" : "grey", // status is 0, act is 0
-					"RECT_FILL_act1" : "rgb(39, 163, 221)",// status is 0, act is 1
-					"RECT_FILL_act2" : "rgb(157, 198, 45)",// status is 0, act is 2
-					"RECT_FILL_act3" : "darkblue",// status is 0, act is 3
-					"RECT_TEXT" : "black",
+					"RECT_FILL_Freeze": "red", // status is not 0
+					"RECT_FILL_Move": "green", // status is 0, default
+					"RECT_FILL_act4": "rgb(217, 152, 203)", // status is 0, act is 0
+					"RECT_FILL_act1": "rgb(39, 163, 221)", // status is 0, act is 1
+					"RECT_FILL_act2": "rgb(157, 198, 45)", // status is 0, act is 2
+					"RECT_FILL_act3": "rgb(250, 195, 100)", // status is 0, act is 3
+					"RECT_TEXT": "black",
 				},
-				LEGEND_CONTENT = [
-				  {
-					color : COLOR.RECT_FILL_act1,
-					text : "收货"
-				  },{
-					color : COLOR.RECT_FILL_act2,
-					text : "发货"
-				  }],
-				  LEGEND_BORDER = [{
-					color : COLOR.RECT_FILL_Freeze,
-					text : "不可移动"
-				  },{
-					color : COLOR.RECT_FILL_Move,
-					text : "可移动"
-				  }],
+				LEGEND_CONTENT = [{
+					color: COLOR.RECT_FILL_act1,
+					text: "收货"
+				}, {
+					color: COLOR.RECT_FILL_act2,
+					text: "发货"
+				}],
+				LEGEND_BORDER = [{
+					color: COLOR.RECT_FILL_Freeze,
+					text: "不可移动"
+				}, {
+					color: COLOR.RECT_FILL_Move,
+					text: "可移动"
+				}],
 				TaskTitle = {
-					"I" : "收货计划",
-					"O" : "发货计划",
-					"S" : "散托作业",
-					"Z" : "整托作业"
+					"I": "收货计划",
+					"O": "发货计划",
+					"S": "散托作业",
+					"Z": "整托作业"
 				},
-				  gatesArray = [],
-				  yGScale;
-			/** 
-			*	util functions
-			*/
-			function formatter0(number){
-				if(number < 10)
-					return "0" + number;
-				return number;
-			}
-			function dt2str(dt){
-				return "" + dt.getFullYear() + formatter0(dt.getMonth()) + formatter0(dt.getDate()) + formatter0(dt.getHours()) + formatter0(dt.getMinutes()) + formatter0(dt.getSeconds());
-			}
-			function formattTime(sTime) {
-		      var year = sTime.substr(0, 4),
-		        month = sTime.substr(4, 2),
-		        day = sTime.substr(6, 2),
-		        hour = sTime.substr(8, 2),
-		        minute = sTime.substr(10, 2),
-		        second = sTime.substr(12, 2);
-		      return new Date(year, month - 1, day, hour, minute, second);
-		    }
-
-		    function colorOfResize(d){
-		      if (d.status !== "0") {
-		        return COLOR.RECT_FILL_Freeze;
-		      } else {
-		        return COLOR.RECT_FILL_Move;
-		      }
-		    }
-
-
-			
+				gatesArray = [],
+				RectObj = {},
+				yGScale;
+			//aProgress
+			var aProgress = {
+				"I": [{
+					title: "收货进度",
+					percentage: 30
+				}, {
+					title: "上架进度",
+					percentage: 70
+				}],
+				"O": [{
+					title: "拣货进度",
+					percentage: 30
+				}, {
+					title: "发货进度",
+					percentage: 70
+				}]
+			};
 			/**
-			*	for mock data
-			*/
+			 *	for mock data
+			 */
 			//
-			function mockTime(startTime, endTime, lenghth){
+			function mockTime(startTime, endTime, lenghth) {
 				var aTime = [];
-				var dtStart = new Date(dtToday.getFullYear(), dtToday.getMonth(), dtToday.getDate(),startTime);
-				var dtEnd = new Date(dtToday.getFullYear(), dtToday.getMonth(), dtToday.getDate(),endTime);
-				for(var i = dtStart; i <= dtEnd ; i.setMinutes(i.getMinutes() + lenghth)) {
+				var dtStart = new Date(dtToday.getFullYear(), dtToday.getMonth(), dtToday.getDate(), startTime);
+				var dtEnd = new Date(dtToday.getFullYear(), dtToday.getMonth(), dtToday.getDate(), endTime);
+				for (var i = dtStart; i <= dtEnd; i.setMinutes(i.getMinutes() + lenghth)) {
 					aTime.push({
-						TIMEKEY : "" + formatter0(i.getHours()) + formatter0(i.getMinutes()) + formatter0(i.getSeconds())
+						TIMEKEY: "" + formatter0(i.getHours()) + formatter0(i.getMinutes()) + formatter0(i.getSeconds())
 					});
 				}
 				return aTime;
 			}
 			//
-			function mockAppointment(n){
+			function mockAppointment(n) {
 				var aAppointment = [];
-				for(var i = 0; i < n; i ++){
-					var index
+				for (var i = 0; i < n * 4; i++) {
 					aAppointment.push({
 						// APP_SECTIONID : randomGate(Math.ceil(Math.random()*10),Math.ceil(Math.random()*3)),
-						sort : 0,
-						APP_SECTIONID : "",
-						SR_ACT_STATE : "" + Math.floor(Math.random()*5),
+						sort: 0,
+						APP_SECTIONID: "",
+						SR_ACT_STATE: "" + Math.floor(Math.random() * 5),
 						// SR_ACT_STATE : "0",
-						STARTTIME : dt2str(new Date(dtToday.getFullYear(), dtToday.getMonth(), dtToday.getDate(),Math.ceil(Math.random()*4) + 8)),
-						FINISHTIME : dt2str(new Date(dtToday.getFullYear(), dtToday.getMonth(), dtToday.getDate(),Math.ceil(Math.random()*4) + 12)),
-						PLATE : "plate" + i,
-						LOAD_WEIGHT : Math.floor(Math.random()*10000),
-						LOAD_WEIGHT_UOM : "KG",
-						LOAD_VOLUME : Math.floor(Math.random()*1000),
-						LOAD_VOLUME_UOM : "CCM",
-						ACT_DIR : "" + Math.floor(Math.random()*2 + 1),
-						TU_NUM : "" + Math.floor(Math.random()*100000),
+						STARTTIME: dt2str(new Date(dtToday.getFullYear(), dtToday.getMonth(), dtToday.getDate(), Math.ceil(Math.random() * 4) + 8)),
+						FINISHTIME: dt2str(new Date(dtToday.getFullYear(), dtToday.getMonth(), dtToday.getDate(), Math.ceil(Math.random() * 4) + 12)),
+						PLATE: "plate" + i,
+						LOAD_WEIGHT: Math.floor(Math.random() * 10000),
+						LOAD_WEIGHT_UOM: "KG",
+						LOAD_VOLUME: Math.floor(Math.random() * 1000),
+						LOAD_VOLUME_UOM: "CCM",
+						ACT_DIR: "" + Math.ceil(Math.random() * 4),
+						TU_NUM_EXT: "" + Math.floor(Math.random() * 100000),
+						DOOR: "DOOR" + Math.floor(Math.random() * 10),
+						DOOR_STATUS: "" + Math.floor(Math.random() * 2),
+						WAVE: "" + Math.floor(Math.random() * 100000),
+						DBQTY: Math.random(),
+						ALLQTY: Math.random(),
+						SJQTY: Math.random()
 					});
 				}
 				return aAppointment;
 			}
 			//
 			function mockGates(n) {
-			  var list = [];
-			  for (var i = 1; i <= n; i++) {
-				list.push({
-					SECTIONID : "gate" + i
-				});
-			  }
-			  return list;
+				var list = [];
+				for (var i = 1; i <= n * 2; i++) {
+					list.push({
+						SECTIONID: "GATE##gate" + i + "###" + Math.ceil(Math.random() * 4)
+					});
+				}
+				for (var i = 0; i < n; i++) {
+					list.push({
+						SECTIONID: "DOOR##DOOR" + i
+					});
+				}
+				return list;
 			}
 			/**
-			*	mock data
-			*/
+			 *	mock data
+			 */
 			var dtToday = new Date();
 			//aGateList
-			var aGateList = mockGates(5);
+			var aGateList = mockGates(10);
 			//aAppointment
 			var aAppointment = mockAppointment(5);
 			//aDateLabels
 			var aDateLabels = [{
-				DATEKEY : "" + dtToday.getFullYear() + formatter0(dtToday.getMonth()) + formatter0(dtToday.getDate())
+				DATEKEY: "" + dtToday.getFullYear() + formatter0(dtToday.getMonth()) + formatter0(dtToday.getDate())
 			}];
 			//aTimeLabel
-			var aTimeLabel = mockTime(8,20,30);
-			//aProgress
-			var aProgress = [{
-				title : "收货进度",
-				percentage : 30
-			},{
-				title : "上架进度",
-				percentage : 70
-			}];
-
-			test(aGateList, aAppointment, aDateLabels, aTimeLabel, null,/*TBD*/aProgress);
-			function test(aGateList, aAppointment, aDateLabels, aTimeLabel, oAPI, /*TBD*/aProgress){
-				if (!(aGateList.length && aDateLabels.length && aTimeLabel.length)) {
-				  return;
-				}
-				//min
-				var sDateMin = aDateLabels[0].DATEKEY;
-				var sTimeMin = aTimeLabel[0].TIMEKEY;
-				var timeMin = new Date(sDateMin.substr(0, 4), sDateMin.substr(4, 2) - 1, sDateMin.substr(6, 2), sTimeMin.substr(0, 2), sTimeMin.substr(2, 2), sTimeMin.substr(4, 2));
-				//max
-				var sDateMax = aDateLabels.pop().DATEKEY;
-				var sTimeMax = aTimeLabel.pop().TIMEKEY;
-				var timeMax = new Date(sDateMax.substr(0, 4), sDateMax.substr(4, 2) - 1, sDateMax.substr(6, 2), sTimeMax.substr(0, 2), sTimeMax.substr(2, 2), sTimeMax.substr(4, 2));
-				
-				//draw DateTime
-				$("#DateTime").html(TaskTitle[T] + " : "
-					+ timeMin.getFullYear() + "年" 
-					+ (timeMin.getMonth() + 1)+ "月"
-					+ timeMin.getDate() + "日" 
-					+ formatter0(timeMin.getHours()) + ":"
-					+ formatter0(timeMin.getMinutes()) + ":"
-					+ formatter0(timeMin.getSeconds())
-					+ "   ~   " 
-					+ timeMax.getFullYear() + "年" 
-					+ (timeMax.getMonth() + 1)+ "月"
-					+ timeMax.getDate() + "日" 
-					+ formatter0(timeMax.getHours()) + ":"
-					+ formatter0(timeMax.getMinutes()) + ":"
-					+ formatter0(timeMax.getSeconds()));
-
-				//draw Progress Indicator
+			var aTimeLabel = mockTime(8, 20, 30);
+			var Gantt_HTMLIsland = Gantt_HTMLIsland || {
+				api: null, // The callback API, is set in function getdata and called during startup
+				appointments: {},
 				/**
-					<div id=Progress>
-						<div id=Progress0>
-							<div id=title0>XXX</div>
-							<div id=percentage>
-								<div id=pl0>XXX</div>
-								<div id=pr0>XXX</div>
-							</div>
-						</div>
-					</div>
-				*/
-				if(T === "I" || T === "O"){
-					aProgress.forEach(function(item, i ){
-						var a = $("#Progress").append("<div id=Progress" + i + " class='Progress'></div>");
-						$("#Progress" + i).append("<div id=title" + i +" class='ProgressTitle'>" + item.title + "</div>");// add title
-						$("#Progress" + i).append("<div id=percentage" + i +" class='ProgressIndicator'></div>");
-						$("#percentage" + i).append("<div id=pl" + i + " class='ProgressIndicatorLeft' style='width:calc(" + item.percentage.toFixed(2) + "% - 0.2rem);'></div>");
-						$("#percentage" + i).append("<div id=pr" + i + " class='ProgressIndicatorRight' style='width:calc(" + (100 - item.percentage).toFixed(2) + "% - 0.2rem);'></div>");
-						if(item.percentage < 50)
-						{
-							$("#pr" + i).html(item.percentage.toFixed(2) + "%");
-						} else {
-							$("#pl" + i).html(item.percentage.toFixed(2) + "%");
+				 * get the data from the backend and draw gantt chart
+				 * @param aGateList {array} list of the Gates
+				 * @param aAppointment {array} list of appointment
+				 * @author I074431
+				 * */
+				gantt_chart_show: function(aGateList, aAppointment, aDateLabels, aTimeLabel, oAPI) {
+					window.api = oAPI;
+					d3.selectAll(".d3-tip").remove();
+					if (!(aDateLabels.length && aTimeLabel.length)) {
+						return;
+					}
+					//min
+					var sDateMin = aDateLabels[0].DATEKEY;
+					var sTimeMin = aTimeLabel[0].TIMEKEY;
+					var timeMin = new Date(sDateMin.substr(0, 4), sDateMin.substr(4, 2) - 1, sDateMin.substr(6, 2), sTimeMin.substr(0, 2), sTimeMin.substr(2, 2), sTimeMin.substr(4, 2));
+					//max
+					var sDateMax = aDateLabels.pop().DATEKEY;
+					var sTimeMax = aTimeLabel.pop().TIMEKEY;
+					var timeMax = new Date(sDateMax.substr(0, 4), sDateMax.substr(4, 2) - 1, sDateMax.substr(6, 2), sTimeMax.substr(0, 2), sTimeMax.substr(2, 2), sTimeMax.substr(4, 2));
+					//
+					var nTicks = aTimeLabel.length;
+					//I 进货
+					this.drawDiv($.grep(aGateList, function(item) {
+						var str = item.SECTIONID;
+						if (str.indexOf("###1") > -1) {
+							item.SECTIONID = str.substring(str.indexOf("##") + 2, str.indexOf("###"));
+							return item;
+						}
+					}), $.grep(aAppointment, function(item) {
+						if (item.ACT_DIR === "1") {
+							return item;
+						}
+					}), timeMin, timeMax, nTicks, "I");
+					//O 发货
+					this.drawDiv($.grep(aGateList, function(item) {
+						var str = item.SECTIONID;
+						if (str.indexOf("###2") > -1) {
+							item.SECTIONID = str.substring(str.indexOf("##") + 2, str.indexOf("###"));
+							return item;
+						}
+					}), $.grep(aAppointment, function(item) {
+						if (item.ACT_DIR === "2") {
+							return item;
+						}
+					}), timeMin, timeMax, nTicks, "O");
+					//S 散托
+					this.drawDiv($.grep(aGateList, function(item) {
+						var str = item.SECTIONID;
+						if (str.indexOf("###3") > -1) {
+							item.SECTIONID = str.substring(str.indexOf("##") + 2, str.indexOf("###"));
+							return item;
+						}
+					}), $.grep(aAppointment, function(item) {
+						if (item.ACT_DIR === "3") {
+							return item;
+						}
+					}), timeMin, timeMax, nTicks, "S");
+					//Z 整托
+					this.drawDiv($.grep(aGateList, function(item) {
+						var str = item.SECTIONID;
+						if (str.indexOf("###4") > -1) {
+							item.SECTIONID = str.substring(str.indexOf("##") + 2, str.indexOf("###"));
+							return item;
+						}
+					}), $.grep(aAppointment, function(item) {
+						if (item.ACT_DIR === "4") {
+							return item;
+						}
+					}), timeMin, timeMax, nTicks, "Z");
+					//DOOR
+					window.aDoors = $.grep(aGateList, function(item) {
+						var str = item.SECTIONID;
+						if (str.indexOf("DOOR##") > -1) {
+							item.SECTIONID = str.substr(str.indexOf("##") + 2);
+							return item;
 						}
 					});
-				}
-
-				//draw Table
-				this.appointments = aAppointment;
-				var that = this;
-				this.api = oAPI;
-				//legend
-				$("#Table").append("<div id='legend' style='float: right; width:" + WIDTH_LEGEND + "px; height:580px;'></div>");
-				//timeAxis
-				$("#Table").append("<div id='timeAxis' style='width: calc(100% - " + WIDTH_LEGEND + "px); height: " + 80 + "px;'></div>");
-				$("#Table").append("<div id='gantt_chart' style='width: calc(100% - " + WIDTH_LEGEND + "px); height: " + 500 + "px; overflow-y: scroll;'></div>");
-				
-				//简体中文本地化
-		        var zh = d3.locale({
-		            decimal: ".",
-		            thousands: ",",
-		            grouping: [3],
-		            currency: ["¥", ""],
-		            dateTime: "%a %b %e %X %Y",
-		            date: "%Y/%-m/%-d",
-		            time: "%H:%M:%S",
-		            periods: ["上午", "下午"],
-		            days: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
-		            shortDays: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
-		            months: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
-		            shortMonths: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"]
-		        });
-		        var nTicks = aTimeLabel.length;
-		        WIDTH_SVG = $("#timeAxis").width() - 20;
-				MARGIN = WIDTH_SVG - PADDING - 10;
-				// WIDTH_TICK = MARGIN / (nTicks - 1); //online
-				WIDTH_TICK = MARGIN / nTicks; //offline
-				var timeScale = d3.scaleTime().domain([timeMin, timeMax]).range([0, MARGIN]);
-				var xTAxis = d3.svg.axis()
-			        .scale(timeScale)
-			        .ticks(nTicks)
-			        .tickFormat(zh.timeFormat("%H:%M"));
-			    var svg = d3.select("#timeAxis").append("svg")
-			    	.attr("width", WIDTH_SVG + 10)
-        			.attr("height", 100);
-			    svg.append("g")
-			        .attr("class", "axis")
-			        .attr("transform", "translate(" + PADDING + ", " + PADDING_HEIGHT + ")")
-			        .call(xTAxis);
-			    d3.selectAll('g.tick text').attr('transform','translate(20,20)rotate(60)');
-
-				//gantt_chart
-				svg = d3.select("#gantt_chart").append("svg")
-			        .attr("style", "overflow-y:scroll !important")
-			        .attr("width", WIDTH_SVG)
-			        .attr("height", HEIGHT_SVG);
-				/**
-				* convert data to display
-				*/
-				//gateList
-				function getGateName(aOriList) {
-				  var aList = [];
-				  aOriList.forEach(function(item) {
-				    aList.push(item.SECTIONID);
-				  });
-				  return aList;
-				}
-				aGateList = getGateName(aGateList);
-				aGateList.push("dummy");
-				var intervals;
-				//tip
-				var tipContent = d3.tip()
-					.attr('class', 'd3-tip')
-					.html(function(d) {
-						var html = "";
-						switch(T){
-							case "I":
-							case "O":
-								html += "<p style='color:red;'>车号: " + d.TU + "</p>"
-								    	+ "<p style='color:red;'>库门: " + d.TU + "</p>"
-								    	+ "<input type='submit' value='分配库门' onclick='test1()' style='background-color: black;'/>";
-								break;
-							case "Z":
-							case "S":
-								html += "<div><p style='color:red; float: left;'>任务排序方式：</p>" 
-								    	+ '<label><input name="SortType" type="radio" value="0" />物料</label> '
-										+ '<label><input name="SortType" type="radio" value="1" />仓位</label></div> ';
-								break;
-							default:
-								break;
-						}
-					    return html;
+					aDoors.push({
+						SECTIONID: ""
 					});
-		        function generateData(){
-		        	//appointment to rect data
-					intervals = [];
-			        aAppointment.forEach(function(item) {
-			          var startTime = formattTime(item.STARTTIME),
-			            endTime = formattTime(item.FINISHTIME);
-			          var status = item.SR_ACT_STATE;
-			          if (startTime > timeMax || endTime < timeMin)
-			            return;
-			          if (timeMin > startTime) {
-			            startTime = timeMin;
-			            status = "4";
-			            item.SR_ACT_STATE = "4";
-			          }
-			          if (timeMax < endTime) {
-			            endTime = timeMax;
-			            status = "4";
-			            item.SR_ACT_STATE = "4";
-			          }
-			          intervals.push({
-			          	sort: item.sort,//TBD
-			            gate: item.APP_SECTIONID,
-			            startTime: startTime,
-			            endTime: endTime,
-			            status: status,
-			            plate: item.PLATE,
-			            weight: item.LOAD_WEIGHT,
-			            weight_uom: item.LOAD_WEIGHT_UOM,
-			            volume: item.LOAD_VOLUME,
-			            volume_uom: item.LOAD_VOLUME_UOM,
-			            act: item.ACT_DIR,
-			            source: item,
-			            TU : item.TU_NUM
-			              //moveable : item.XXX,
-			              //plate: item.plate,
-			              //sum: item.sum,
-			              //weight: item.weight
-			          });
-			        });
-		        	//init intervalsBasedOnGate
-			        var intervalsBasedOnGate = [];
-					for (var i in aGateList) {
-						intervalsBasedOnGate[aGateList[i]] = [];
+				},
+				drawDiv: function(aGateList, aAppointment, timeMin, timeMax, nTicks, T) {
+					var that = this;
+					if (!aGateList.length) {
+						return;
 					}
-					for (var i in intervals) {
-						if(intervals[i].gate){
-						    intervalsBasedOnGate[intervals[i].gate].push(intervals[i]);
-						} else {
-						    intervalsBasedOnGate['dummy'].push(intervals[i]);
-						}
+					$("#Chart" + T).html("");
+					//aAppoitmentAddon with fields DOCNO, plate, weight, loadweight
+					this.appointments[T] = aAppointment;
+					$("#Chart" + T).addClass("whole");
+					$("#Chart" + T).append("<div id='DateTime" + T + "' class='Title'>");
+					//draw DateTime
+					$("#DateTime" + T).html(TaskTitle[T] + " : " +
+						timeMin.getFullYear() + "年" +
+						(timeMin.getMonth() + 1) + "月" +
+						timeMin.getDate() + "日" +
+						formatter0(timeMin.getHours()) + ":" +
+						formatter0(timeMin.getMinutes()) + ":" +
+						formatter0(timeMin.getSeconds()) +
+						"   ~   " +
+						timeMax.getFullYear() + "年" +
+						(timeMax.getMonth() + 1) + "月" +
+						timeMax.getDate() + "日" +
+						formatter0(timeMax.getHours()) + ":" +
+						formatter0(timeMax.getMinutes()) + ":" +
+						formatter0(timeMax.getSeconds()));
+					//draw Progress Indicator
+					/**
+					  <div id=Progress>
+					    <div id=Progress0>
+					      <div id=title0>XXX</div>
+					      <div id=percentage>
+					        <div id=pl0>XXX</div>
+					        <div id=pr0>XXX</div>
+					      </div>
+					    </div>
+					  </div>
+					*/
+					if (!document.getElementById("SAVE" + T)) {
+						$("#Chart" + T).before('<input id="SAVE' + T + '" type="submit" value="保存" onclick="update' + T + '()"/>');
 					}
-					var numOfGates = 0;// count of rows
-					gatesArray = [];
-					var k = 0; // index in the loop
-					for (var key in intervalsBasedOnGate) {
-						//each gate at least 1 row
-						gatesArray[k] = 1;
-						//sort by startTime
-						intervalsBasedOnGate[key].sort(function(a,b){
-							return a.startTime - b.startTime;
+					switch (T) {
+						case "I":
+						case "O":
+							$("#Chart" + T).append("<div id='Progress" + T + "'>");
+							aProgress[T][0].percentage = parseFloat(aAppointment[0] ? aAppointment[0].ALLQTY * 100 : 0);
+							aProgress[T][1].percentage = parseFloat(aAppointment[0] ? aAppointment[0].SJQTY * 100 : 0);
+							aProgress[T].forEach(function(item, i) {
+								$("#Progress" + T).append("<div id=Progress" + i + T + " class='Progress'></div>");
+								$("#Progress" + i + T).append("<div id=title" + i + T + " class='ProgressTitle'>" + item.title + "</div>"); // add title
+								$("#Progress" + i + T).append("<div id=percentage" + i + T + " class='ProgressIndicator'></div>");
+								$("#percentage" + i + T).append("<div id=pl" + i + T + " class='ProgressIndicatorLeft' style='width:calc(" + item.percentage.toFixed(2) + "% - 0.2rem);'></div>");
+								$("#percentage" + i + T).append("<div id=pr" + i + T + " class='ProgressIndicatorRight' style='width:calc(" + (100 - item.percentage).toFixed(2) + "% - 0.2rem);'></div>");
+								if (item.percentage < 50) {
+									$("#pr" + i + T).html(item.percentage.toFixed(2) + "%");
+								} else {
+									$("#pl" + i + T).html(item.percentage.toFixed(2) + "%");
+								}
+							});
+							// 
+							if (!document.getElementById("SUBMIT" + T)) {
+								$("#Chart" + T).before('<input id="SUBMIT' + T + '" type="submit" value="提交" onclick="send_tu_to_tm' + T + '()"/>');
+							}
+							break;
+						case "S":
+						case "Z":
+							break;
+					}
+					$("#Chart" + T).append("<div id='Table" + T + "'></div>");
+					//draw Table
+					//timeAxis
+					$("#Table" + T).append("<div id='timeAxis" + T + "' style='width: calc(100% - " + WIDTH_LEGEND + "px); height: " + 50 + "px;'></div>");
+					$("#Table" + T).append("<div id='gantt_chart" + T + "' style='width: calc(100% - " + WIDTH_LEGEND + "px); height: " + 420 + "px; overflow-y: scroll;'></div>");
+					//简体中文本地化
+					var zh = d3.locale({
+						decimal: ".",
+						thousands: ",",
+						grouping: [3],
+						currency: ["¥", ""],
+						dateTime: "%a %b %e %X %Y",
+						date: "%Y/%-m/%-d",
+						time: "%H:%M:%S",
+						periods: ["上午", "下午"],
+						days: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
+						shortDays: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
+						months: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+						shortMonths: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"]
+					});
+					WIDTH_SVG = $("#timeAxis" + T).width() - 20;
+					MARGIN = WIDTH_SVG - PADDING - 10;
+					// WIDTH_TICK = MARGIN / (nTicks - 1); //online
+					WIDTH_TICK = MARGIN / nTicks; //offline
+					var timeScale = d3.scaleTime().domain([timeMin, timeMax]).range([0, MARGIN]);
+					var xTAxis = d3.svg.axis()
+						.scale(timeScale)
+						.ticks(nTicks)
+						.tickFormat(zh.timeFormat("%H:%M"));
+					var svg = d3.select("#timeAxis" + T).append("svg")
+						.attr("width", WIDTH_SVG + 10)
+						.attr("height", 100);
+					svg.append("g")
+						.attr("class", "axis")
+						.attr("transform", "translate(" + PADDING + ", " + 0 + ")")
+						.call(xTAxis);
+					d3.selectAll('g.tick text').attr('transform', 'translate(20,20)rotate(60)');
+					//gantt_chart
+					svg = d3.select("#gantt_chart" + T).append("svg")
+						.attr("style", "overflow-y:scroll !important")
+						.attr("width", WIDTH_SVG)
+						.attr("height", HEIGHT_SVG);
+					/**
+					 * convert data to display
+					 */
+					//gateList
+					function getGateName(aOriList) {
+						var aList = [];
+						aOriList.forEach(function(item) {
+							aList.push(item.SECTIONID);
 						});
-				        //group 
-				        var rowGroup = [{
-							endTime: new Date(0),
-							row: numOfGates
-				        }];
-				        for (var i in intervalsBasedOnGate[key]) {
-							var newRow = true;
-							for (var j in rowGroup) {
-								if (rowGroup[j].endTime <= intervalsBasedOnGate[key][i].startTime) {
-									newRow = false;
-									intervalsBasedOnGate[key][i].row = rowGroup[j].row;
-									rowGroup[j].endTime = intervalsBasedOnGate[key][i].endTime;
+						return aList;
+					}
+					aGateList = getGateName(aGateList);
+					aGateList.push("dummy");
+					var intervals;
+					//tip
+					var tipContent = d3.tip()
+						.attr('class', 'tip' + T)
+						.attr('class', 'd3-tip')
+						.html(function(d) {
+							var html = "";
+							switch (T) {
+								case "I":
+								case "O":
+									html += "<p style='color:red;'>车号: " + d.TU + "</p>" +
+										"<p style='color:red;'>库门: " + d.DOOR + "</p>";
+									if (d.DOOR_STATUS === "0") {
+										html += "<input type='submit' value='分配库门' onclick='chooseGate" + T + "()'/>";
+									}
+									RectObj[T] = d;
 									break;
+								case "Z":
+									html += "<div><p style='color:red; float: left; margin: auto;'>任务排序方式：</p>" +
+										'<input name="SortType" type="radio" value="1" style="height: inherit;">物料</input> ' +
+										'<input name="SortType" type="radio" value="2" style="height: inherit;">仓位</input></div> ';
+									break;
+								case "S":
+								default:
+									break;
+							}
+							return html;
+						});
+
+					function generateData() {
+						//appointment to rect data
+						intervals = [];
+						aAppointment.forEach(function(item) {
+							var startTime = formattTime(item.STARTTIME),
+								endTime = formattTime(item.FINISHTIME);
+							var status = item.SR_ACT_STATE;
+							if (startTime > timeMax || endTime < timeMin)
+								return;
+							if (timeMin > startTime) {
+								startTime = timeMin;
+								status = "4";
+								item.SR_ACT_STATE = "4";
+							}
+							if (timeMax < endTime) {
+								endTime = timeMax;
+								status = "4";
+								item.SR_ACT_STATE = "4";
+							}
+							intervals.push({
+								gate: item.APP_SECTIONID,
+								startTime: startTime,
+								endTime: endTime,
+								status: status,
+								plate: item.PLATE,
+								weight: item.LOAD_WEIGHT,
+								weight_uom: item.LOAD_WEIGHT_UOM,
+								volume: item.LOAD_VOLUME,
+								volume_uom: item.LOAD_VOLUME_UOM,
+								act: item.ACT_DIR,
+								source: item,
+								TU: item.TU_NUM_EXT,
+								DOOR: item.DOOR,
+								DOOR_STATUS: item.DOOR_STATUS,
+								ZSTZT: item.ZSTZT,
+								WAVE: item.WAVE
+								//moveable : item.XXX,
+								//plate: item.plate,
+								//sum: item.sum,
+								//weight: item.weight
+							});
+						});
+						//init intervalsBasedOnGate
+						var intervalsBasedOnGate = [];
+						for (var i in aGateList) {
+							intervalsBasedOnGate[aGateList[i]] = [];
+						}
+						for (var i in intervals) { //未分配Gate和Gate在所给列表中不存在的情况，都分配给dummy
+							if (intervals[i].gate && intervalsBasedOnGate[intervals[i].gate]) {
+								intervalsBasedOnGate[intervals[i].gate].push(intervals[i]);
+							} else {
+								intervalsBasedOnGate['dummy'].push(intervals[i]);
+							}
+						}
+						var numOfGates = 0; // count of rows
+						gatesArray = [];
+						var k = 0; // index in the loop
+						for (var key in intervalsBasedOnGate) {
+							//each gate at least 1 row
+							gatesArray[k] = 1;
+							//sort by startTime
+							intervalsBasedOnGate[key].sort(function(a, b) {
+								return a.startTime - b.startTime;
+							});
+							//group 
+							var rowGroup = [{
+								endTime: new Date(0),
+								row: numOfGates
+							}];
+							for (var i in intervalsBasedOnGate[key]) {
+								var newRow = true;
+								for (var j in rowGroup) {
+									if (rowGroup[j].endTime <= intervalsBasedOnGate[key][i].startTime) {
+										newRow = false;
+										intervalsBasedOnGate[key][i].row = rowGroup[j].row;
+										rowGroup[j].endTime = intervalsBasedOnGate[key][i].endTime;
+										break;
+									}
+								}
+								if (newRow) {
+									intervalsBasedOnGate[key][i].row = ++numOfGates;
+									rowGroup.push({
+										endTime: intervalsBasedOnGate[key][i].endTime,
+										row: numOfGates
+									});
+									gatesArray[k]++;
 								}
 							}
-							if (newRow) {
-								intervalsBasedOnGate[key][i].row = ++numOfGates;
-								rowGroup.push({
-									endTime: intervalsBasedOnGate[key][i].endTime,
-									row: numOfGates
-								});
-								gatesArray[k]++;
+							k++;
+							numOfGates++;
+						}
+						yGScale = d3.scale.linear()
+							.domain([0, numOfGates])
+							.range([0, numOfGates * ROW_HEIGHT]);
+						d3.svg.axis().scale(yGScale).orient("left");
+					}
+
+					function drawGantt() {
+						generateData();
+						//line
+						//horizon
+						var i = 0;
+						var g = 0;
+						for (var index in aGateList) {
+							svg.append("line")
+								.attr("class", "lineGrid")
+								.attr("x1", 0)
+								.attr("y1", yGScale(i))
+								.attr("x2", MARGIN + PADDING)
+								.attr("y2", yGScale(i));
+							svg.append("text")
+								.attr("class", "chart")
+								.attr("y", yGScale(i) + ROW_HEIGHT / 2)
+								.attr("transform", "translate(10,0)")
+								.text(aGateList[index])
+							i += gatesArray[g];
+							g++;
+						}
+						svg.append("line")
+							.attr("class", "lineGrid")
+							.attr("x1", 0)
+							.attr("y1", yGScale(i))
+							.attr("x2", MARGIN + PADDING)
+							.attr("y2", yGScale(i));
+						svg.attr("height", yGScale(i) + 10);
+						lineMax = i;
+						//vertical
+						var hours = (timeMax - timeMin) / 60 / 60 / 1000;
+						for (var j = 0; j <= hours; j++) {
+							svg.append("line")
+								.attr("class", "lineGrid")
+								.attr("x1", j * MARGIN / hours + PADDING)
+								.attr("y1", 0)
+								.attr("x2", j * MARGIN / hours + PADDING)
+								.attr("y2", yGScale(i));
+						}
+						//text
+						svg.selectAll("text.plate")
+							.data(intervals)
+							.enter()
+							.append("text")
+							.attr("class", "content")
+							.style("fill", COLOR.RECT_TEXT)
+							.text(function(d) {
+								return d.plate;
+							})
+							.attr("x", function(d) {
+								d.text1 = this;
+								return timeScale(d.startTime) + PADDING + textLeftPadding;
+							})
+							.attr("y", function(d) {
+								return yGScale(d.row) + PADDING_RECTANGLE + textDownPadding;
+							});
+						svg.selectAll("text.plate2")
+							.data(intervals)
+							.enter()
+							.append("text")
+							.attr("class", "content")
+							.style("fill", COLOR.RECT_TEXT)
+							.text(function(d) {
+								switch (d.act) {
+									case "1":
+									case "2":
+										return "重量:" + d.weight + d.weight_uom;
+									case "3":
+									case "4":
+										return "波次:" + d.WAVE;
+								}
+							})
+							.attr("x", function(d) {
+								d.text2 = this;
+								return timeScale(d.startTime) + PADDING + textLeftPadding;
+							})
+							.attr("y", function(d) {
+								return yGScale(d.row) + PADDING_RECTANGLE + 2 * textDownPadding;
+							});
+						svg.selectAll("text.plate3")
+							.data(intervals)
+							.enter()
+							.append("text")
+							.attr("class", "content")
+							.style("fill", COLOR.RECT_TEXT)
+							.text(function(d) {
+								return "体积:" + d.volume + d.volume_uom;
+							})
+							.attr("x", function(d) {
+								d.text3 = this;
+								return timeScale(d.startTime) + PADDING + textLeftPadding;
+							})
+							.attr("y", function(d) {
+								return yGScale(d.row) + PADDING_RECTANGLE + 3 * textDownPadding;
+							});
+						//progress
+						svg.selectAll("rect.progress")
+							.data(intervals)
+							.enter()
+							.append("rect")
+							.attr("class", "rectP")
+							.style("fill", function(d) {
+								// if (d.status !== "0") {
+								//   return COLOR.RECT_FILL_Freeze;
+								// } else {
+								if (d.act) {
+									return COLOR["RECT_FILL_act" + d.act];
+								} else {
+									return COLOR.RECT_FILL_Move;
+								}
+							})
+							.style("opacity", 0.5)
+							.attr("x", function(d) {
+								d.progress = this;
+								return timeScale(d.startTime) + PADDING;
+							})
+							.attr("y", function(d) {
+								return yGScale(d.row) + PADDING_RECTANGLE;
+							})
+							.attr("width", function(d) {
+								return 0;
+							})
+							.attr("height", WIDTH_RECTANGLE);
+						svg.selectAll(".rectP")
+							.transition()
+							.duration(500)
+							.ease("linear")
+							.attr("width", function(d) {
+								d.width = timeScale(d.endTime) - timeScale(d.startTime);
+								return d.width * d.source.DBQTY;
+							});
+						//body
+						svg.call(tipContent);
+						svg.selectAll("rect.body")
+							.data(intervals)
+							.enter()
+							.append("rect")
+							.attr("class", "rect" + T)
+							.style("fill", function(d) {
+								// if (d.status !== "0") {
+								//   return COLOR.RECT_FILL_Freeze;
+								// } else {
+								if (d.act) {
+									return COLOR["RECT_FILL_act" + d.act];
+								} else {
+									return COLOR.RECT_FILL_Move;
+								}
+							})
+							.style("opacity", 0.1)
+							.attr("x", function(d) {
+								d.body = this;
+								return timeScale(d.startTime) + PADDING;
+							})
+							.attr("y", function(d) {
+								return yGScale(d.row) + 0 + PADDING_RECTANGLE;
+							})
+							.attr("width", function(d) {
+								d.width = timeScale(d.endTime) - timeScale(d.startTime);
+								return d.width;
+							})
+							.attr("height", WIDTH_RECTANGLE)
+							.attr("cursor", "move")
+							.on('mouseover', function(d) {
+								if (T === "S") {
+									return;
+								}
+								tipContent.show(d);
+								tipContent.d = d;
+								if (T === "Z") {
+									var indexChecked = d.ZSTZT ? d.ZSTZT - 1 : 1;
+									$(":radio")[indexChecked].checked = true;
+									if (d.status !== "0") {
+										for (var i = 0; i < $(":radio").length; i++) {
+											if (i !== indexChecked)
+												$(":radio")[i].disabled = true;
+										}
+									}
+									$(":radio").click(function(e) {
+										tipContent.d.source.ZSTZT = tipContent.d.ZSTZT = e.target.value;
+									});
+								}
+							})
+							.call(drag);
+						//left
+						svg.selectAll("rect.left")
+							.data(intervals)
+							.enter()
+							.append("rect")
+							.attr("class", "rectleft")
+							.style("fill", colorOfResize)
+							.style("opacity", 0.8)
+							.attr("x", function(d) {
+								d.left = this;
+								return timeScale(d.startTime) + PADDING - WIDTH_RESIZE;
+							})
+							.attr("y", function(d) {
+								return yGScale(d.row) + PADDING_RECTANGLE;
+							})
+							.attr("width", WIDTH_RESIZE)
+							.attr("height", WIDTH_RECTANGLE)
+							.attr("cursor", "ew-resize")
+							.call(dragleft);
+						//right
+						svg.selectAll("rect.right")
+							.data(intervals)
+							.enter()
+							.append("rect")
+							.attr("class", "rectright")
+							.style("fill", colorOfResize)
+							.style("opacity", 0.8)
+							.attr("x", function(d) {
+								d.right = this;
+								return timeScale(d.endTime) + PADDING;
+							})
+							.attr("y", function(d) {
+								return yGScale(d.row) + PADDING_RECTANGLE;
+							})
+							.attr("width", WIDTH_RESIZE)
+							.attr("height", WIDTH_RECTANGLE)
+							.attr("cursor", "ew-resize")
+							.call(dragright);
+						//up
+						svg.selectAll("rect.up")
+							.data(intervals)
+							.enter()
+							.append("rect")
+							.attr("class", "rectup")
+							.style("fill", colorOfResize)
+							.style("opacity", 0.8)
+							.attr("x", function(d) {
+								d.up = this;
+								return timeScale(d.startTime) + PADDING - WIDTH_RESIZE;
+							})
+							.attr("y", function(d) {
+								return yGScale(d.row) + 0 + PADDING_RECTANGLE - HEIGHT_RISIZE;
+							})
+							.attr("width", function(d) {
+								return d.width + WIDTH_RESIZE * 2;
+							})
+							.attr("height", HEIGHT_RISIZE);
+						//down
+						svg.selectAll("rect.down")
+							.data(intervals)
+							.enter()
+							.append("rect")
+							.attr("class", "rectdown")
+							.style("fill", colorOfResize)
+							.style("opacity", 0.8)
+							.attr("x", function(d) {
+								d.down = this;
+								return timeScale(d.startTime) + PADDING - WIDTH_RESIZE;
+							})
+							.attr("y", function(d) {
+								return yGScale(d.row) + (ROW_HEIGHT + WIDTH_RECTANGLE) / 2;
+							})
+							.attr("width", function(d) {
+								return d.width + WIDTH_RESIZE * 2;
+							})
+							.attr("height", HEIGHT_RISIZE);
+						$(".rect" + T).each(function(index, element) {
+							element.onmouseout = function(e) {
+								e.stopPropagation();
 							}
-				        }
-				        k++;
-				        numOfGates++;
-				    }
-					yGScale = d3.scale.linear()
-						.domain([0, numOfGates])
-						.range([0, numOfGates * ROW_HEIGHT]);
-					d3.svg.axis().scale(yGScale).orient("left");
-		        }
-
-
-			function drawGantt(){
-				generateData();
-				//line
-      			//horizon
-      			var i = 0;
-    			var g = 0;
-				for (var index in aGateList) {
-					svg.append("line")
-						.attr("class", "lineGrid")
-						.attr("x1", 0)
-						.attr("y1", yGScale(i))
-						.attr("x2", MARGIN  + PADDING)
-						.attr("y2", yGScale(i));
-					svg.append("text")
-						.attr("class", "chart")
-						.attr("y", yGScale(i) + ROW_HEIGHT / 2)
-						.attr("transform", "translate(" + TITLE_SECTIONID_WIDTH + ", " + 0 + ")")
-						.text(aGateList[index])
-					i += gatesArray[g];
-					g++;
-				}
-				svg.append("line")
-					.attr("class", "lineGrid")
-					.attr("x1", 0)
-					.attr("y1", yGScale(i))
-					.attr("x2", MARGIN  + PADDING)
-					.attr("y2", yGScale(i));
-				svg.attr("height",yGScale(i) + 10);
-				lineMax = i;
-				//vertical
-				var hours = (timeMax - timeMin)/60/60/1000;
-				for(var j = 0; j <= hours; j++){
-					svg.append("line")
-					.attr("class", "lineGrid")
-					.attr("x1", j * MARGIN / hours + PADDING)
-					.attr("y1", 0)
-					.attr("x2", j * MARGIN / hours + PADDING)
-					.attr("y2", yGScale(i));
-				}
-
-				//text
-				svg.selectAll("text.plate")
-					.data(intervals)
-					.enter()
-					.append("text")
-					.attr("class", "content")
-					.style("fill", COLOR.RECT_TEXT)
-					.text(function(d) {
-						return d.plate;
-					})
-					.attr("x", function(d) {
-						d.text1 = this;
-						return timeScale(d.startTime) + PADDING + textLeftPadding;
-					})
-					.attr("y", function(d) {
-						return yGScale(d.row) + PADDING_RECTANGLE + textDownPadding;
-					});
-				svg.selectAll("text.plate2")
-					.data(intervals)
-					.enter()
-					.append("text")
-					.attr("class", "content")
-					.style("fill", COLOR.RECT_TEXT)
-					.text(function(d) {
-						return "重量:" + d.weight + d.weight_uom;
-					})
-					.attr("x", function(d) {
-						d.text2 = this;
-						return timeScale(d.startTime) + PADDING + textLeftPadding;
-					})
-					.attr("y", function(d) {
-						return yGScale(d.row) + PADDING_RECTANGLE + 2 * textDownPadding;
-				});
-				svg.selectAll("text.plate3")
-					.data(intervals)
-					.enter()
-					.append("text")
-					.attr("class", "content")
-					.style("fill", COLOR.RECT_TEXT)
-					.text(function(d) {
-						return "体积:" + d.volume + d.volume_uom;
-					})
-					.attr("x", function(d) {
-						d.text3 = this;
-						return timeScale(d.startTime) + PADDING + textLeftPadding;
-					})
-					.attr("y", function(d) {
-						return yGScale(d.row) + PADDING_RECTANGLE + 3 * textDownPadding;
-				});
-				//body
-				svg.call(tipContent);
-		      svg.selectAll("rect")
-		        .data(intervals)
-		        .enter()
-		        .append("rect")
-		        .attr("class", "rect")
-		        .style("fill", function(d) {
-		          // if (d.status !== "0") {
-		          //   return COLOR.RECT_FILL_Freeze;
-		          // } else {
-		            if (d.act){
-		              return COLOR["RECT_FILL_act" + d.act];
-		            }
-		            else{
-		              return COLOR.RECT_FILL_Move;
-		            }
-		        })
-		        .style("opacity", 0.5)
-		        .attr("x", function(d) {
-		          d.body = this;
-		          return timeScale(d.startTime) + PADDING;
-		        })
-		        .attr("y", function(d) {
-		          return yGScale(d.row) + 0 + PADDING_RECTANGLE;
-		        })
-		        .attr("width", function(d) {
-		          d.width = timeScale(d.endTime) - timeScale(d.startTime);
-		          return d.width;
-		        })
-		        .attr("height", WIDTH_RECTANGLE)
-		        .attr("cursor", "move")
-		        .on('mouseover', function(d){
-		        	tipContent.show(d);
-		        	tipContent.d = d;
-		        	if(T === "Z" || T === "S"){
-		        		$(":radio")[d.sort].checked = true;
-			        	$(":radio").click(function(e){
-							tipContent.d.source.sort = tipContent.d.sort = e.target.value;
 						});
-		        	}
-		        })
-		        // .on('mouseout', tipContent.hide)
-		        .attr("width", function(d) {
-		          return 0;
-		        })
-		        .call(drag);
-		    svg.selectAll(".rect")
-		        .transition()
-		        // .delay(function(d,i){
-		        //     return i * 200;
-		        // })
-		        .duration(500)
-		        .ease("linear")
-		        .attr("width", function(d) {
-		          d.width = timeScale(d.endTime) - timeScale(d.startTime);
-		          return d.width;
-		        });
-		        //left
-		      svg.selectAll("rect.left")
-		        .data(intervals)
-		        .enter()
-		        .append("rect")
-		        .attr("class", "rectleft")
-		        .style("fill", colorOfResize)
-		        .style("opacity", 0.8)
-		        .attr("x", function(d) {
-		          d.left = this;
-		          return timeScale(d.startTime) + PADDING - WIDTH_RESIZE;
-		        })
-		        .attr("y", function(d) {
-		          return yGScale(d.row) + PADDING_RECTANGLE;
-		        })
-		        .attr("width",WIDTH_RESIZE)
-		        .attr("height", WIDTH_RECTANGLE)
-		        .attr("cursor", "ew-resize")
-		        // .on('mouseover', showDrag)
-		        // .on('mouseout', hideDrag)
-		        .call(dragleft);
-		        //right
-		      svg.selectAll("rect.right")
-		        .data(intervals)
-		        .enter()
-		        .append("rect")
-		        .attr("class", "rectright")
-		        .style("fill",colorOfResize)
-		        .style("opacity", 0.8)
-		        .attr("x", function(d) {
-		          d.right = this;
-		          return timeScale(d.endTime) + PADDING;
-		        })
-		        .attr("y", function(d) {
-		          return yGScale(d.row) + PADDING_RECTANGLE;
-		        })
-		        .attr("width", WIDTH_RESIZE)
-		        .attr("height", WIDTH_RECTANGLE)
-		        .attr("cursor", "ew-resize")
-		        // .on('mouseover', showDrag)
-		        // .on('mouseout', hideDrag)
-		        .call(dragright);
-		        //up
-		      svg.selectAll("rect.up")
-		        .data(intervals)
-		        .enter()
-		        .append("rect")
-		        .attr("class", "rectup")
-		        .style("fill", colorOfResize)
-		        .style("opacity", 0.8)
-		        .attr("x", function(d) {
-		          d.up = this;
-		          return timeScale(d.startTime) + PADDING - WIDTH_RESIZE;
-		        })
-		        .attr("y", function(d) {
-		          return yGScale(d.row) + 0 + PADDING_RECTANGLE - HEIGHT_RISIZE;
-		        })
-		        .attr("width", function(d) {
-		          return d.width + WIDTH_RESIZE * 2;
-		        })
-		        .attr("height", HEIGHT_RISIZE);
-		        //down
-		      svg.selectAll("rect.down")
-		        .data(intervals)
-		        .enter()
-		        .append("rect")
-		        .attr("class", "rectdown")
-		        .style("fill", colorOfResize)
-		        .style("opacity", 0.8)
-		        .attr("x", function(d) {
-		          d.down = this;
-		          return timeScale(d.startTime) + PADDING - WIDTH_RESIZE;
-		        })
-		        .attr("y", function(d) {
-		          return yGScale(d.row) + (ROW_HEIGHT + WIDTH_RECTANGLE) / 2;
-		        })
-		        .attr("width", function(d) {
-		          return d.width + WIDTH_RESIZE * 2;
-		        })
-		        .attr("height", HEIGHT_RISIZE);
-			}
+						d3.select("#Chart" + T).on('mouseout', tipContent.hide);
+					}
 
-      			
-			function resetGantt() {
-		      d3.selectAll("#gantt_chart svg").remove();
-		      svg = d3.select("#gantt_chart").append("svg")
-		        // .attr("style", "overflow-y:scroll !important")
-		        .attr("width", WIDTH_SVG)
-		        .attr("height", HEIGHT_SVG);
-		    }
-			//rect
-			//drag
-			function dragStart(d) {
-				dragStartLeft(d);
-				dragStartRight(d);
-		    }
+					function resetGantt() {
+						d3.selectAll("#gantt_chart" + T + " svg").remove();
+						svg = d3.select("#gantt_chart" + T).append("svg")
+							// .attr("style", "overflow-y:scroll !important")
+							.attr("width", WIDTH_SVG)
+							.attr("height", HEIGHT_SVG);
+					}
+					//rect
+					//drag
+					function dragStart(d) {
+						dragStartLeft(d);
+						dragStartRight(d);
+					}
 
-		    function dragStartLeft(d) {
-				svg.append("line")
-					.attr("class",function(){
-						d.leftLine = this;
-						return "lineDrag";
-					})
-					.attr("x1", timeScale(d.startTime))
-					.attr("y1", 0)
-					.attr("x2", timeScale(d.startTime))
-					.attr("y2", yGScale(lineMax))
-					.attr("transform", "translate(" + PADDING + ", 0)");
-				tipContent.hide();
-		    }
+					function dragStartLeft(d) {
+						if (d.status !== "0") {
+							return;
+						}
+						svg.append("line")
+							.attr("class", function() {
+								d.leftLine = this;
+								return "lineDrag";
+							})
+							.attr("x1", timeScale(d.startTime))
+							.attr("y1", 0)
+							.attr("x2", timeScale(d.startTime))
+							.attr("y2", yGScale(lineMax))
+							.attr("transform", "translate(" + PADDING + ", 0)");
+						tipContent.hide();
+					}
 
-		    function dragStartRight(d) {
-				svg.append("line")
-					.attr("class",function(){
-						d.rightLine = this;
-						return "lineDrag";
-					})
-					.attr("x1", timeScale(d.endTime))
-					.attr("y1", 0)
-					.attr("x2", timeScale(d.endTime))
-					.attr("y2", yGScale(lineMax))
-					.attr("transform", "translate(" + PADDING + ", 0)");
-				tipContent.hide();
-		    }
+					function dragStartRight(d) {
+						if (d.status !== "0") {
+							return;
+						}
+						svg.append("line")
+							.attr("class", function() {
+								d.rightLine = this;
+								return "lineDrag";
+							})
+							.attr("x1", timeScale(d.endTime))
+							.attr("y1", 0)
+							.attr("x2", timeScale(d.endTime))
+							.attr("y2", yGScale(lineMax))
+							.attr("transform", "translate(" + PADDING + ", 0)");
+						tipContent.hide();
+					}
 
-		    function leftDragMove(d) {
-				if (d.status !== "0"){
-					return;
+					function leftDragMove(d) {
+						if (d.status !== "0") {
+							return;
+						}
+						d3.select(this)
+							.attr("x", function() {
+								var x = Math.floor((d3.event.x - PADDING + WIDTH_RESIZE) / WIDTH_TICK) * WIDTH_TICK + PADDING - WIDTH_RESIZE;
+								x = Math.max(x, timeScale(timeMin) + PADDING - WIDTH_RESIZE);
+								x = Math.min(x, timeScale(d.endTime) + PADDING - WIDTH_RESIZE);
+								var newXBody = x + WIDTH_RESIZE;
+								d.body.setAttribute("x", newXBody);
+								d.progress.setAttribute("x", newXBody);
+								d.up.setAttribute("x", x);
+								d.down.setAttribute("x", x);
+								var newXText = x + WIDTH_RESIZE + textLeftPadding;
+								d.text1.setAttribute("x", newXText);
+								d.text2.setAttribute("x", newXText);
+								d.text3.setAttribute("x", newXText);
+								var newXLine = x - PADDING + WIDTH_RESIZE;
+								d.startTime = timeScale.invert(newXLine);
+								d.leftLine.setAttribute("x1", newXLine);
+								d.leftLine.setAttribute("x2", newXLine);
+								var newWidthBody = timeScale(d.endTime) - timeScale(d.startTime);
+								d.body.setAttribute("width", newWidthBody);
+								d.up.setAttribute("width", newWidthBody + WIDTH_RESIZE * 2);
+								d.down.setAttribute("width", newWidthBody + WIDTH_RESIZE * 2);
+								return x;
+							});
+						tipContent.hide();
+					}
+
+					function rightDragMove(d) {
+						if (d.status !== "0") {
+							return;
+						}
+						d3.select(this)
+							.attr("x", function() {
+								var x = Math.floor((d3.event.x - PADDING) / WIDTH_TICK) * WIDTH_TICK + PADDING;
+								x = Math.min(x, timeScale(timeMax) + PADDING);
+								x = Math.max(x, timeScale(d.startTime) + PADDING);
+								var newXLine = x - PADDING;
+								d.endTime = timeScale.invert(newXLine);
+								d.rightLine.setAttribute("x1", newXLine);
+								d.rightLine.setAttribute("x2", newXLine);
+								var newWidthBody = timeScale(d.endTime) - timeScale(d.startTime);
+								d.body.setAttribute("width", newWidthBody);
+								d.up.setAttribute("width", newWidthBody + WIDTH_RESIZE * 2);
+								d.down.setAttribute("width", newWidthBody + WIDTH_RESIZE * 2);
+								return x;
+							});
+						tipContent.hide();
+					}
+
+					function dragmove(d) {
+						if (d.status !== "0") {
+							return;
+						}
+						d3.select(this)
+							.attr("x", function() {
+								var x = Math.floor((d3.event.x - PADDING - d.width / 2) / WIDTH_TICK) * WIDTH_TICK + PADDING + d.width / 2;
+								//left side
+								x = Math.max(x, timeScale(timeMin) + PADDING + d.width / 2);
+								//right side
+								x = Math.min(x, timeScale(timeMax) + PADDING - d.width / 2);
+								d.startTime = timeScale.invert(x - d.width / 2 - PADDING);
+								d.endTime = timeScale.invert(x + d.width / 2 - PADDING);
+								d.leftLine.setAttribute("x1", x - (d.width) / 2 - PADDING);
+								d.leftLine.setAttribute("x2", x - (d.width) / 2 - PADDING);
+								d.rightLine.setAttribute("x1", x + (d.width) / 2 - PADDING);
+								d.rightLine.setAttribute("x2", x + (d.width) / 2 - PADDING);
+								return x - d.width / 2;
+							})
+							.attr("y", function() {
+								var y = Math.floor((d3.event.y - PADDING_RECTANGLE) / ROW_HEIGHT) * ROW_HEIGHT + PADDING_RECTANGLE;
+								d.gate = aGateList[row2gate(yGScale.invert(y - PADDING_RECTANGLE))];
+								d.text1.setAttribute("y", y + textDownPadding);
+								d.text2.setAttribute("y", y + 2 * textDownPadding);
+								d.text3.setAttribute("y", y + 3 * textDownPadding);
+								return y;
+							})
+							.attr("height", WIDTH_RECTANGLE);
+						["left", "right", "up", "down", "text1", "text2", "text3", "progress"].forEach(function(item) {
+							d[item].setAttribute("style", "opacity:0");
+						});
+						// d.body.setAttribute("style","opacity:1");
+						d.body.style.opacity = 1;
+						tipContent.hide();
+						// d.left.remove();
+						// d.right.remove();
+						// d.up.remove();
+						// d.down.remove();
+						// d.text1.remove();
+						// d.text2.remove();
+						// d.text3.remove();
+					}
+
+					function dragend(d) {
+						if (d.status !== "0") {
+							return;
+						}
+						if (checkAvailable(d)) {
+							d.source.STARTTIME = time2string(d.startTime);
+							d.source.FINISHTIME = time2string(d.endTime);
+							d.source.APP_SECTIONID = d.gate;
+							d.source.DOOR = d.DOOR;
+							// d.source.ZSTZT = d.ZSTZT;
+						}
+						resetGantt();
+						drawGantt();
+					}
+
+					function row2gate(nRow) {
+						for (var i = 0; i < gatesArray.length; i++) {
+							nRow -= gatesArray[i];
+							if (nRow < 0) {
+								return i;
+							}
+						}
+						return gatesArray.length - 1;
+					}
+
+					function time2string(dt) {
+						var month = dt.getMonth(),
+							date = dt.getDate(),
+							hour = dt.getHours(),
+							minute = dt.getMinutes(),
+							second = dt.getSeconds();
+						return "" + dt.getFullYear() +
+							formatter0(month + 1) +
+							formatter0(date) +
+							formatter0(hour) +
+							formatter0(minute) +
+							formatter0(second);
+					}
+
+					function isOverlap(a, b) {
+						if (
+							// a.body.getAttribute("x") - 1e-3 <= b.body.getAttribute("x") - a.body.getAttribute("width") //left
+							a.endTime <= b.startTime ||
+							// b.body.getAttribute("x") - 1e-3 <= a.body.getAttribute("x") - b.body.getAttribute("width") //right
+							b.endTime <= a.startTime ||
+							a.gate !== b.gate
+							// a.getAttribute("y") - 1 <= b.getAttribute("y") - a.getAttribute("height") //up
+							// ||
+							// b.getAttribute("y") - 1 <= a.getAttribute("y") - b.getAttribute("height") //down
+						) {
+							return false;
+						}
+						return true;
+					}
+
+					function checkAvailable(d) {
+						//set to dummy
+						if (d.gate === "dummy") {
+							return true;
+						}
+						//check overlap
+						for (var i = 0; i < intervals.length; i++) {
+							//except itself
+							if (intervals[i] === d) {
+								continue;
+							}
+							if (isOverlap(intervals[i], d)) {
+								return false;
+							}
+						}
+						//default
+						return true;
+					}
+					var drag = d3.behavior.drag()
+						.on("dragstart", dragStart)
+						.on("drag", dragmove)
+						.on("dragend", dragend);
+					var dragleft = d3.behavior.drag()
+						.on("dragstart", dragStartLeft)
+						.on("drag", leftDragMove)
+						.on("dragend", dragend);
+					var dragright = d3.behavior.drag()
+						.on("dragstart", dragStartRight)
+						.on("drag", rightDragMove)
+						.on("dragend", dragend);
+					drawGantt();
+				},
+				_drawGantt: function() {},
+				destroy: function() {
+					MyHTMLIsland = null;
+				},
+				update: function(T) {
+					window.api.fireEvent("PROPERTY_CHANGED", this._generateSendBackData(T));
+				},
+				_generateSendBackData: function(T) {
+					var aList = [];
+					var aNames = [
+						"TU_NUM_EXT",
+						"DOCNO",
+						"APP_SECTIONID",
+						"STARTTIME",
+						"FINISHTIME",
+						//"WAVE",
+						"ACT_DIR",
+						"DOOR",
+						"MAP",
+						"ZSTZT"
+					];
+					this.appointments[T].forEach(function(item) {
+						var aProperty = [];
+						for (var i = 0; i < aNames.length; i++) {
+							aProperty.push(aNames[i] + ':"' + item[aNames[i]] + '"');
+						}
+						aList.push("{" + aProperty.join(",") + "}");
+					});
+					return "[" + aList.join(",") + "]";
+				},
+				send_tu_to_tm: function(T) {
+					window.api.fireEvent("SEND_TU_TO_TM", this._generateSendBackData(T));
+				},
+				loadData: function() {
+					window.api.fireEvent("ON_LOAD_TU");
 				}
-				d3.select(this)
-					.attr("x", function() {
-						var x = Math.floor((d3.event.x - PADDING + WIDTH_RESIZE) / WIDTH_TICK) * WIDTH_TICK + PADDING - WIDTH_RESIZE;
-
-						x = Math.max(x, timeScale(timeMin) + PADDING - WIDTH_RESIZE);
-						x = Math.min(x, timeScale(d.endTime) + PADDING - WIDTH_RESIZE);
-
-						var newXBody = x + WIDTH_RESIZE;
-						d.body.setAttribute("x", newXBody);
-						d.up.setAttribute("x", x);
-						d.down.setAttribute("x", x);
-
-						var newXText = x + WIDTH_RESIZE + textLeftPadding;
-						d.text1.setAttribute("x", newXText);
-						d.text2.setAttribute("x", newXText);
-						d.text3.setAttribute("x", newXText);
-
-						var newXLine = x - PADDING + WIDTH_RESIZE;
-						d.startTime = timeScale.invert(newXLine);
-						d.leftLine.setAttribute("x1", newXLine);
-						d.leftLine.setAttribute("x2", newXLine);
-
-						var newWidthBody = timeScale(d.endTime) - timeScale(d.startTime);
-						d.body.setAttribute("width", newWidthBody);
-						d.up.setAttribute("width", newWidthBody + WIDTH_RESIZE * 2);
-						d.down.setAttribute("width", newWidthBody + WIDTH_RESIZE * 2);
-						return x;
-				});
-		    }
-
-		    function rightDragMove(d) {
-		      if (d.status !== "0"){
-		        return;
-		      }
-		      d3.select(this)
-		        .attr("x", function() {
-		          var x = Math.floor((d3.event.x - PADDING) / WIDTH_TICK) * WIDTH_TICK + PADDING;
-		          x = Math.min(x, timeScale(timeMax) + PADDING);
-		          x = Math.max(x, timeScale(d.startTime) + PADDING);
-
-		          var newXLine = x - PADDING;
-		          d.endTime = timeScale.invert(newXLine);
-		          d.rightLine.setAttribute("x1", newXLine);
-		          d.rightLine.setAttribute("x2", newXLine);
-
-		          var newWidthBody = timeScale(d.endTime) - timeScale(d.startTime);
-		          d.body.setAttribute("width", newWidthBody);
-		          d.up.setAttribute("width", newWidthBody + WIDTH_RESIZE * 2 );
-		          d.down.setAttribute("width", newWidthBody + WIDTH_RESIZE * 2);
-		          return x;
-		        });
-		    }
-
-		    function dragmove(d) {
-		      if (d.status !== "0"){
-		        return;
-		      }
-		      d3.select(this)
-		        .attr("x", function() {
-		          var x = Math.floor((d3.event.x - PADDING - d.width / 2) / WIDTH_TICK) * WIDTH_TICK + PADDING + d.width / 2;
-		          //left side
-		          x = Math.max(x, timeScale(timeMin) + PADDING + d.width / 2);
-		          //right side
-		          x = Math.min(x, timeScale(timeMax) + PADDING - d.width / 2);
-		          d.startTime = timeScale.invert(x - d.width / 2 - PADDING);
-		          d.endTime = timeScale.invert(x + d.width / 2 - PADDING);
-		          d.leftLine.setAttribute("x1", x - (d.width) / 2 - PADDING);
-		          d.leftLine.setAttribute("x2", x - (d.width) / 2 - PADDING);
-		          d.rightLine.setAttribute("x1", x + (d.width) / 2 - PADDING);
-		          d.rightLine.setAttribute("x2", x + (d.width) / 2 - PADDING);
-		          return x - d.width / 2;
-		        })
-		        .attr("y", function() {
-		          var y = Math.floor((d3.event.y - PADDING_RECTANGLE) / ROW_HEIGHT) * ROW_HEIGHT + PADDING_RECTANGLE;
-		          d.gate = aGateList[row2gate(yGScale.invert(y - WIDTH_RECTANGLE / 2))];
-		          d.text1.setAttribute("y", y + textDownPadding);
-		          d.text2.setAttribute("y", y + 2 * textDownPadding);
-		          d.text3.setAttribute("y", y + 3 * textDownPadding);
-		          return y;
-		        })
-		        .attr("height", WIDTH_RECTANGLE);
-		      d3.selectAll(".rectleft").remove();
-		      d3.selectAll(".rectright").remove();
-		      d3.selectAll(".rectup").remove();
-		      d3.selectAll(".rectdown").remove();
-		      d3.selectAll(".content").remove();
-		    }
-
-		    function dragend(d) {
-		    	if (d.status !== "0"){
-		        	return;
-		      	}
-		      if(checkAvailable(d)){
-		        d.source.STARTTIME = time2string(d.startTime);
-		        d.source.FINISHTIME = time2string(d.endTime);
-		        d.source.APP_SECTIONID = d.gate;
-		      }
-		      resetGantt();
-		      drawGantt();
-		    }
-		    function row2gate(nRow) {
-		      for (var i = 0; i < gatesArray.length; i ++) {
-		        if (nRow <= 0) {
-		          return i;
-		        }
-		        nRow -= gatesArray[i];
-		      }
-		      return gatesArray.length - 1;
-		    }
-		    function time2string(dt) {
-		      var month = dt.getMonth(),
-		        date = dt.getDate(),
-		        hour = dt.getHours(),
-		        minute = dt.getMinutes(),
-		        second = dt.getSeconds();
-		      return "" + dt.getFullYear() +
-		        formatter0(month + 1) +
-		        formatter0(date) +
-		        formatter0(hour) +
-		        formatter0(minute) +
-		        formatter0(second);
-		    }
-		    function isOverlap(a, b){
-		        if(a.getAttribute("x") <= b.getAttribute("x") - a.getAttribute("width") //left
-		            || b.getAttribute("x") <= a.getAttribute("x") - b.getAttribute("width") //right
-		            || a.getAttribute("y") <= b.getAttribute("y") - a.getAttribute("height") //up
-		            || b.getAttribute("y") <= a.getAttribute("y") - b.getAttribute("height") //down
-		        ){
-		            return false;
-		        }
-		        return true;
-		    }
-		    function checkAvailable(d){
-		        //set to dummy
-		        if(d.gate === "dummy"){
-		            return true;
-		        }
-		        //check overlap
-		        for(var i = 0; i < intervals.length; i ++ ){
-		            //except itself
-		            if(intervals[i] === d){
-		                continue;
-		            }
-		            if(isOverlap(intervals[i].body, d.body)){
-		                return false;
-		            }
-		        }
-		        //default
-		        return true;
-		    }
-		    var drag = d3.behavior.drag()
-		      .on("dragstart", dragStart)
-		      .on("drag", dragmove)
-		      .on("dragend", dragend);
-		    var dragleft = d3.behavior.drag()
-		      .on("dragstart", dragStartLeft)
-		      .on("drag", leftDragMove)
-		      .on("dragend", dragend);
-		    var dragright = d3.behavior.drag()
-		      .on("dragstart", dragStartRight)
-		      .on("drag", rightDragMove)
-		      .on("dragend", dragend);
-		      drawGantt();
-
-			}
-			
+			};
+			Gantt_HTMLIsland.gantt_chart_show(aGateList, aAppointment, aDateLabels, aTimeLabel, null);
+			window.setInterval(Gantt_HTMLIsland.loadData, 1000 * 60 * 10);
 		</script>
 	</body>
+
 </html>

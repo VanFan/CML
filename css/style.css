@@ -149,7 +149,7 @@ Abel at Aug/10/2016
 
 .SelectDialog{
   left: 40%;
-  top: 20%;
+  /*top: 20%;*/
   min-width: 200px;
   max-width: calc(50% - 2rem);
   position: absolute;

@@ -200,7 +200,7 @@
 					aAppointment.push({
 						// APP_SECTIONID : randomGate(Math.ceil(Math.random()*10),Math.ceil(Math.random()*3)),
 						sort: 0,
-						APP_SECTIONID: "gate" + 21,
+						APP_SECTIONID: "gate" + Math.ceil(Math.random() * 21),
 						SR_ACT_STATE: "" + Math.floor(Math.random() * 5),
 						STARTTIME: dt2str(new Date(dtToday.getFullYear(), dtToday.getMonth(), dtToday.getDate(), Math.ceil(Math.random() * 4) + 8)),
 						FINISHTIME: dt2str(new Date(dtToday.getFullYear(), dtToday.getMonth(), dtToday.getDate(), Math.ceil(Math.random() * 4) + 12)),

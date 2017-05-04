@@ -103,10 +103,10 @@
 			}
 
 			function colorOfResize(d) {
-				if (d.status !== "0") {
-					return COLOR.RECT_FILL_Freeze;
-				} else {
+				if (d.status === "0" || d.status === "1") {
 					return COLOR.RECT_FILL_Move;
+				} else {
+					return COLOR.RECT_FILL_Freeze;
 				}
 			}
 			//const varieties
@@ -160,9 +160,7 @@
 					"S": "散托作业",
 					"Z": "整托作业"
 				},
-				gatesArray = [],
-				RectObj = {},
-				yGScale;
+				RectObj = {};
 			//aProgress
 			var aProgress = {
 				"I": [{
@@ -202,9 +200,8 @@
 					aAppointment.push({
 						// APP_SECTIONID : randomGate(Math.ceil(Math.random()*10),Math.ceil(Math.random()*3)),
 						sort: 0,
-						APP_SECTIONID: "",
+						APP_SECTIONID: "gate" + 21,
 						SR_ACT_STATE: "" + Math.floor(Math.random() * 5),
-						// SR_ACT_STATE : "0",
 						STARTTIME: dt2str(new Date(dtToday.getFullYear(), dtToday.getMonth(), dtToday.getDate(), Math.ceil(Math.random() * 4) + 8)),
 						FINISHTIME: dt2str(new Date(dtToday.getFullYear(), dtToday.getMonth(), dtToday.getDate(), Math.ceil(Math.random() * 4) + 12)),
 						PLATE: "plate" + i,
@@ -340,6 +337,8 @@
 				},
 				drawDiv: function(aGateList, aAppointment, timeMin, timeMax, nTicks, T) {
 					var that = this;
+					var yGScale;
+					var gatesArray = [];
 					if (!aGateList.length) {
 						return;
 					}
@@ -536,21 +535,25 @@
 						for (var i in aGateList) {
 							intervalsBasedOnGate[aGateList[i]] = [];
 						}
-						for (var i in intervals) { //未分配Gate和Gate在所给列表中不存在的情况，都分配给dummy
-							if (intervals[i].gate && intervalsBasedOnGate[intervals[i].gate]) {
+						for (var i in intervals) { 
+							if (intervals[i].gate) {
+								if(!intervalsBasedOnGate[intervals[i].gate]){//Gate在所给列表中不存在的情况
+									aGateList.unshift(intervals[i].gate);
+									intervalsBasedOnGate[intervals[i].gate] = [];
+								}
 								intervalsBasedOnGate[intervals[i].gate].push(intervals[i]);
-							} else {
+							} else {//未分配Gate，分配给dummy
 								intervalsBasedOnGate['dummy'].push(intervals[i]);
 							}
 						}
 						var numOfGates = 0; // count of rows
 						gatesArray = [];
-						var k = 0; // index in the loop
-						for (var key in intervalsBasedOnGate) {
+						// for (var key in intervalsBasedOnGate) {
+						for (var index in aGateList) {
 							//each gate at least 1 row
-							gatesArray[k] = 1;
+							gatesArray[index] = 1;
 							//sort by startTime
-							intervalsBasedOnGate[key].sort(function(a, b) {
+							intervalsBasedOnGate[aGateList[index]].sort(function(a, b) {
 								return a.startTime - b.startTime;
 							});
 							//group 
@@ -558,26 +561,25 @@
 								endTime: new Date(0),
 								row: numOfGates
 							}];
-							for (var i in intervalsBasedOnGate[key]) {
+							for (var i in intervalsBasedOnGate[aGateList[index]]) {
 								var newRow = true;
 								for (var j in rowGroup) {
-									if (rowGroup[j].endTime <= intervalsBasedOnGate[key][i].startTime) {
+									if (rowGroup[j].endTime <= intervalsBasedOnGate[aGateList[index]][i].startTime) {
 										newRow = false;
-										intervalsBasedOnGate[key][i].row = rowGroup[j].row;
-										rowGroup[j].endTime = intervalsBasedOnGate[key][i].endTime;
+										intervalsBasedOnGate[aGateList[index]][i].row = rowGroup[j].row;
+										rowGroup[j].endTime = intervalsBasedOnGate[aGateList[index]][i].endTime;
 										break;
 									}
 								}
 								if (newRow) {
-									intervalsBasedOnGate[key][i].row = ++numOfGates;
+									intervalsBasedOnGate[aGateList[index]][i].row = ++numOfGates;
 									rowGroup.push({
-										endTime: intervalsBasedOnGate[key][i].endTime,
+										endTime: intervalsBasedOnGate[aGateList[index]][i].endTime,
 										row: numOfGates
 									});
-									gatesArray[k]++;
+									gatesArray[index]++;
 								}
 							}
-							k++;
 							numOfGates++;
 						}
 						yGScale = d3.scale.linear()
@@ -775,7 +777,14 @@
 							.enter()
 							.append("rect")
 							.attr("class", "rectleft")
-							.style("fill", colorOfResize)
+							// .style("fill", colorOfResize)
+							.style("fill", function(d){
+								if (d.status !== "0") {
+									return COLOR.RECT_FILL_Freeze;
+								} else {
+									return COLOR.RECT_FILL_Move;
+								}
+							})
 							.style("opacity", 0.8)
 							.attr("x", function(d) {
 								d.left = this;
@@ -885,7 +894,7 @@
 					}
 
 					function dragStartRight(d) {
-						if (d.status !== "0") {
+						if (d.status !== "0" && d.status !== "1") {
 							return;
 						}
 						svg.append("line")
@@ -933,7 +942,7 @@
 					}
 
 					function rightDragMove(d) {
-						if (d.status !== "0") {
+						if (d.status !== "0" && d.status !== "1") {
 							return;
 						}
 						d3.select(this)
@@ -955,24 +964,10 @@
 					}
 
 					function dragmove(d) {
-						if (d.status !== "0") {
+						if (d.status !== "0" && d.status !== "1") {
 							return;
 						}
 						d3.select(this)
-							.attr("x", function() {
-								var x = Math.floor((d3.event.x - PADDING - d.width / 2) / WIDTH_TICK) * WIDTH_TICK + PADDING + d.width / 2;
-								//left side
-								x = Math.max(x, timeScale(timeMin) + PADDING + d.width / 2);
-								//right side
-								x = Math.min(x, timeScale(timeMax) + PADDING - d.width / 2);
-								d.startTime = timeScale.invert(x - d.width / 2 - PADDING);
-								d.endTime = timeScale.invert(x + d.width / 2 - PADDING);
-								d.leftLine.setAttribute("x1", x - (d.width) / 2 - PADDING);
-								d.leftLine.setAttribute("x2", x - (d.width) / 2 - PADDING);
-								d.rightLine.setAttribute("x1", x + (d.width) / 2 - PADDING);
-								d.rightLine.setAttribute("x2", x + (d.width) / 2 - PADDING);
-								return x - d.width / 2;
-							})
 							.attr("y", function() {
 								var y = Math.floor((d3.event.y - PADDING_RECTANGLE) / ROW_HEIGHT) * ROW_HEIGHT + PADDING_RECTANGLE;
 								d.gate = aGateList[row2gate(yGScale.invert(y - PADDING_RECTANGLE))];
@@ -982,6 +977,23 @@
 								return y;
 							})
 							.attr("height", WIDTH_RECTANGLE);
+						if(d.status === "0"){ 
+							d3.select(this)
+								.attr("x", function() {
+									var x = Math.floor((d3.event.x - PADDING - d.width / 2) / WIDTH_TICK) * WIDTH_TICK + PADDING + d.width / 2;
+									//left side
+									x = Math.max(x, timeScale(timeMin) + PADDING + d.width / 2);
+									//right side
+									x = Math.min(x, timeScale(timeMax) + PADDING - d.width / 2);
+									d.startTime = timeScale.invert(x - d.width / 2 - PADDING);
+									d.endTime = timeScale.invert(x + d.width / 2 - PADDING);
+									d.leftLine.setAttribute("x1", x - (d.width) / 2 - PADDING);
+									d.leftLine.setAttribute("x2", x - (d.width) / 2 - PADDING);
+									d.rightLine.setAttribute("x1", x + (d.width) / 2 - PADDING);
+									d.rightLine.setAttribute("x2", x + (d.width) / 2 - PADDING);
+									return x - d.width / 2;
+							});
+						}
 						["left", "right", "up", "down", "text1", "text2", "text3", "progress"].forEach(function(item) {
 							d[item].setAttribute("style", "opacity:0");
 						});
@@ -998,7 +1010,7 @@
 					}
 
 					function dragend(d) {
-						if (d.status !== "0") {
+						if (d.status !== "0" && d.status !== "1") {
 							return;
 						}
 						if (checkAvailable(d)) {
